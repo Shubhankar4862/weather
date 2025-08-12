@@ -1,0 +1,5 @@
+{
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "https://weather-server-nine.vercel.app/api/$1" }
+  ]
+}

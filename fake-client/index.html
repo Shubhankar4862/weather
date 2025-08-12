@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Weather CRUD</title>
+</head>
+<body>
+  <h1>Weather Location Manager</h1>
+  <input id="usernameInput" placeholder="Username">
+  <button onclick="setUser()">Set User</button>
+
+  <div id="section" style="display:none; margin-top:20px;">
+    <h2>User: <span id="userHeader"></span></h2>
+
+    <div style="margin-bottom:20px;">
+      <h3>Add Location</h3>
+      <div>
+        <input id="zip" placeholder="Zip">
+        <input id="lat" placeholder="Lat">
+        <input id="lon" placeholder="Lon">
+        <button onclick="addLocation()">Add Location</button>
+      </div>
+      <p><small>Provide only ZIP or both Lat/Lon</small></p>
+    </div>
+
+    <div style="margin-bottom:20px;">
+      <h3>Saved Locations</h3>
+      <div id="locations"></div>
+    </div>
+
+    <div style="margin-bottom:20px;">
+      <button onclick="refreshWeather()">Refresh Weather</button>
+    </div>
+
+    <div>
+      <h3>Weather Forecasts</h3>
+      <div id="weatherResults"></div>
+    </div>
+  </div>
+
+<script>
+let username = ''
+const api = 'http://localhost:3001'
+
+function setUser() {
+  username = document.getElementById('usernameInput').value.trim()
+  if (!username) return alert('enter username')
+  fetch(api+'/user', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({username})})
+    .then(()=> {
+      document.getElementById('section').style.display='block'
+      document.getElementById('userHeader').textContent=username
+      loadLocations()
+    })
+}
+
+function loadLocations() {
+  fetch(`${api}/locations?username=${encodeURIComponent(username)}`)
+    .then(r=>r.json())
+    .then(locs=>{
+      const div=document.getElementById('locations')
+      div.innerHTML=''
+      locs.forEach(loc=>{
+        const d=document.createElement('div')
+        d.style.marginBottom = '8px'
+        d.textContent = `ID: ${loc.id} | ZIP: ${loc.zip||''} | LAT: ${loc.lat||''} | LON: ${loc.lon||''}`
+        const delBtn=document.createElement('button')
+        delBtn.textContent='Delete'
+        delBtn.onclick=()=>deleteLocation(loc.id)
+        const updBtn=document.createElement('button')
+        updBtn.textContent='Update'
+        updBtn.onclick=()=>updateLocation(loc.id)
+        d.append(' ', delBtn, ' ', updBtn)
+        div.appendChild(d)
+      })
+    })
+}
+
+function addLocation() {
+  const zip=document.getElementById('zip').value.trim()
+  const lat=document.getElementById('lat').value.trim()
+  const lon=document.getElementById('lon').value.trim()
+  if (!zip && (!lat || !lon)) return alert('Provide zip OR both lat/lon')
+  if (zip && (lat || lon)) return alert('Only one type allowed')
+  fetch(api+'/location',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({username, zip:zip||null, lat:lat||null, lon:lon||null})
+  }).then(()=>loadLocations())
+}
+
+function deleteLocation(id) {
+  fetch(api+'/location/'+id,{method:'DELETE'}).then(()=>loadLocations())
+}
+
+function updateLocation(id) {
+  const zip=prompt('New zip (leave blank for lat/lon update)')
+  const lat=zip ? null : prompt('New lat')
+  const lon=zip ? null : prompt('New lon')
+  if (!zip && (!lat || !lon)) return alert('Provide zip OR both lat/lon')
+  if (zip && (lat || lon)) return alert('Only one type allowed')
+  fetch(api+'/location/'+id,{
+    method:'PUT',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({zip:zip||null, lat:lat||null, lon:lon||null})
+  }).then(()=>loadLocations())
+}
+
+function refreshWeather() {
+  fetch(`${api}/weather?username=${encodeURIComponent(username)}`)
+    .then(r=>r.json())
+    .then(data=>{
+      const container=document.getElementById('weatherResults')
+      container.innerHTML=''
+      data.forEach(entry=>{
+        const block=document.createElement('div')
+        block.style.marginBottom='15px'
+        if (entry.error) {
+          block.innerHTML = `<strong>${entry.location.zip || (entry.location.lat+','+entry.location.lon)}</strong><br>
+            Error: ${entry.error}`
+        } else {
+          const place = entry.place || (entry.location.zip || (entry.location.lat+','+entry.location.lon))
+          const first = entry.forecast.list[0]
+          block.innerHTML = `<strong style="font-size:1.1em;">${place}</strong><br>
+            Temp: ${first.main.temp} °C<br>
+            Weather: ${first.weather[0].description}<br>
+            Humidity: ${first.main.humidity}%<br>
+            Wind: ${first.wind.speed} m/s`
+        }
+        container.appendChild(block)
+      })
+    })
+}
+</script>
+</body>
+</html>

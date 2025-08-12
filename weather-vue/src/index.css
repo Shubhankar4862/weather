@@ -1,0 +1,106 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+  --background: 40 80% 96%; /* soft warm off-white */
+  --foreground: 30 30% 20%; /* warm dark brown/gray */
+
+  --card: 40 70% 98%; /* lighter warm background */
+  --card-foreground: 30 30% 25%; /* slightly lighter text */
+
+  --popover: 40 70% 98%;
+  --popover-foreground: 30 30% 25%;
+
+  --primary: 38 75% 55%; /* warm golden yellow */
+  --primary-foreground: 40 20% 96%; /* contrast with light background */
+
+  --secondary: 35 40% 80%; /* warm beige */
+  --secondary-foreground: 30 30% 35%; /* muted dark text */
+
+  --muted: 35 30% 90%; /* very soft warm beige */
+  --muted-foreground: 30 25% 50%; /* muted medium text */
+
+  --accent: 40 85% 65%; /* brighter warm accent */
+  --accent-foreground: 40 20% 96%;
+
+  --destructive: 10 70% 55%; /* soft warm red/orange */
+  --destructive-foreground: 0 0% 100%; /* white text */
+
+  --border: 40 25% 80%; /* subtle warm border */
+  --input: 40 25% 85%; /* input background */
+  --ring: 38 75% 55%; /* ring focus color */
+
+  --radius: 0.0rem; /* rounded corners for friendliness */
+
+  --sidebar-background: 40 80% 94%;
+  --sidebar-foreground: 30 30% 20%;
+  --sidebar-primary: 38 75% 55%;
+  --sidebar-primary-foreground: 40 20% 96%;
+  --sidebar-accent: 35 40% 80%;
+  --sidebar-accent-foreground: 30 30% 25%;
+  --sidebar-border: 40 25% 80%;
+  --sidebar-ring: 38 75% 55%;
+}
+
+
+  .dark {
+    --background: 0 0% 0%;
+    --foreground: 210 40% 98%;
+
+    --card: 0 0% 0%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 0 0% 0%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 0 0% 100%;
+    --primary-foreground: 0 0% 0%;
+
+    --secondary: 0 0% 12%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 0 0% 12%;
+    --muted-foreground: 215 20% 65%;
+
+    --accent: 0 0% 20%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 40%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --ring: 0 0% 100%;
+
+    --sidebar-background: 0 0% 0%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 0 0% 100%;
+    --sidebar-primary-foreground: 0 0% 0%;
+    --sidebar-accent: 0 0% 12%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 0 0% 20%;
+    --sidebar-ring: 0 0% 100%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Change text selection background color to green */
+::selection {
+  background-color: #98d52d ;
+  color: rgb(81, 81, 80); /* Optional: set a contrasting color for selected text */
+}
