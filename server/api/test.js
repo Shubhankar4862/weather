@@ -3,7 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
 const { Pool } = require('pg');
-const serverless = require('serverless-http');
+// const serverless = require('serverless-http');
 
 const app = express();
 app.use(express.json());
@@ -215,4 +215,4 @@ app.get('/api/weather/:username', async (req, res) => {
 });
 
 // Export for serverless
-module.exports = serverless(app);
+// module.exports = serverless(app);
