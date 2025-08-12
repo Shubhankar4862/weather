@@ -13,10 +13,10 @@ app.use(cors());
 // Database setup
 const pool = new Pool({
   connectionString: process.env.DB_CONNECTION_STRING,
-  ssl: {
+  ssl: process.env.DB_SSL === 'true' ? {
     rejectUnauthorized: true,
     ca: process.env.DB_CA_CERT || undefined,
-  },
+  } : false,
 });
 
 // Initialize DB schema
@@ -48,8 +48,9 @@ function buildForecastUrl({ zip, lat, lon }) {
   throw new Error('Invalid location');
 }
 
-// Routes
+// ROUTES
 
+// Create user (POST JSON { username })
 app.post('/user', async (req, res) => {
   const { username } = req.body;
   if (!username) return res.status(400).json({ error: 'username required' });
@@ -66,52 +67,40 @@ app.post('/user', async (req, res) => {
   }
 });
 
+// Get all locations for a user (GET with query ?username=)
 app.get('/locations', async (req, res) => {
   const { username } = req.query;
   if (!username) return res.status(400).json({ error: 'username required' });
 
   try {
-    const u = await pool.query(`SELECT id FROM users WHERE username=$1`, [
-      username,
-    ]);
-    if (!u.rows.length) return res.status(404).json({ error: 'user not found' });
+    const userRes = await pool.query(`SELECT id FROM users WHERE username=$1`, [username]);
+    if (!userRes.rows.length) return res.status(404).json({ error: 'user not found' });
 
-    const locs = await pool.query(`SELECT * FROM locations WHERE user_id=$1`, [
-      u.rows[0].id,
-    ]);
-    res.json(locs.rows);
+    const locRes = await pool.query(`SELECT * FROM locations WHERE user_id=$1`, [userRes.rows[0].id]);
+    res.json(locRes.rows);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'internal server error' });
   }
 });
 
+// Add location (POST JSON { username, zip OR lat, lon })
 app.post('/location', async (req, res) => {
   const { username, zip, lat, lon } = req.body;
   if (!username) return res.status(400).json({ error: 'username required' });
-  if (!zip && !(lat && lon))
-    return res.status(400).json({ error: 'Either zip or lat/lon required' });
-  if (zip && (lat || lon))
-    return res
-      .status(400)
-      .json({ error: 'Provide only zip or lat/lon, not both' });
+  if (!zip && !(lat && lon)) return res.status(400).json({ error: 'Either zip or lat/lon required' });
+  if (zip && (lat || lon)) return res.status(400).json({ error: 'Provide only zip or lat/lon, not both' });
 
   try {
-    const u = await pool.query(`SELECT id FROM users WHERE username=$1`, [
-      username,
-    ]);
-    if (!u.rows.length) return res.status(404).json({ error: 'user not found' });
+    const userRes = await pool.query(`SELECT id FROM users WHERE username=$1`, [username]);
+    if (!userRes.rows.length) return res.status(404).json({ error: 'user not found' });
 
-    const count = await pool.query(
-      `SELECT COUNT(*) FROM locations WHERE user_id=$1`,
-      [u.rows[0].id]
-    );
-    if (parseInt(count.rows[0].count) >= 5)
-      return res.status(400).json({ error: 'max 5 locations' });
+    const countRes = await pool.query(`SELECT COUNT(*) FROM locations WHERE user_id=$1`, [userRes.rows[0].id]);
+    if (parseInt(countRes.rows[0].count) >= 5) return res.status(400).json({ error: 'max 5 locations' });
 
     await pool.query(
       `INSERT INTO locations (user_id, zip, lat, lon) VALUES ($1, $2, $3, $4)`,
-      [u.rows[0].id, zip || null, lat || null, lon || null]
+      [userRes.rows[0].id, zip || null, lat || null, lon || null]
     );
     res.json({ message: 'location added' });
   } catch (err) {
@@ -120,12 +109,11 @@ app.post('/location', async (req, res) => {
   }
 });
 
+// Update location (PUT JSON { zip OR lat, lon })
 app.put('/location/:id', async (req, res) => {
   const { zip, lat, lon } = req.body;
-  if (!zip && !(lat && lon))
-    return res.status(400).json({ error: 'Either zip or lat/lon required' });
-  if (zip && (lat || lon))
-    return res.status(400).json({ error: 'Provide only zip or lat/lon, not both' });
+  if (!zip && !(lat && lon)) return res.status(400).json({ error: 'Either zip or lat/lon required' });
+  if (zip && (lat || lon)) return res.status(400).json({ error: 'Provide only zip or lat/lon, not both' });
 
   try {
     await pool.query(
@@ -139,6 +127,7 @@ app.put('/location/:id', async (req, res) => {
   }
 });
 
+// Delete location
 app.delete('/location/:id', async (req, res) => {
   try {
     await pool.query(`DELETE FROM locations WHERE id=$1`, [req.params.id]);
@@ -149,31 +138,27 @@ app.delete('/location/:id', async (req, res) => {
   }
 });
 
+// Get weather forecast for all user locations (GET with ?username=)
 app.get('/weather', async (req, res) => {
   const { username } = req.query;
   if (!username) return res.status(400).json({ error: 'username required' });
 
   try {
-    const u = await pool.query(`SELECT id FROM users WHERE username=$1`, [
-      username,
-    ]);
-    if (!u.rows.length) return res.status(404).json({ error: 'user not found' });
+    const userRes = await pool.query(`SELECT id FROM users WHERE username=$1`, [username]);
+    if (!userRes.rows.length) return res.status(404).json({ error: 'user not found' });
 
-    const locs = await pool.query(
-      `SELECT zip, lat, lon FROM locations WHERE user_id=$1`,
-      [u.rows[0].id]
-    );
+    const locRes = await pool.query(`SELECT zip, lat, lon FROM locations WHERE user_id=$1`, [userRes.rows[0].id]);
 
     const data = [];
-    for (const loc of locs.rows) {
+    for (const loc of locRes.rows) {
       try {
-        const r = await axios.get(buildForecastUrl(loc));
-        const cityName = r.data.city?.name || null;
-        const country = r.data.city?.country || null;
+        const response = await axios.get(buildForecastUrl(loc));
+        const cityName = response.data.city?.name || null;
+        const country = response.data.city?.country || null;
         data.push({
           location: loc,
           place: `${cityName}${country ? ', ' + country : ''}`,
-          forecast: r.data,
+          forecast: response.data,
         });
       } catch (err) {
         data.push({ location: loc, error: err.message });
@@ -186,14 +171,15 @@ app.get('/weather', async (req, res) => {
   }
 });
 
-// Initialize DB before first request, but avoid app.listen for serverless environments
+// Initialize DB then listen (except for serverless)
 (async () => {
   try {
     await initDB();
-    // If traditional server run:
-    if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+    if (!process.env.VERCEL && !process.env.LAMBDA_TASK_ROOT) {
       const PORT = process.env.PORT || 3001;
-      app.listen(PORT, () => console.log(`running on ${PORT}`));
+      app.listen(PORT, () => {
+        console.log(`✅ Server running on port ${PORT}`);
+      });
     }
   } catch (err) {
     console.error('DB init error:', err);
