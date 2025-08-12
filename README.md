@@ -13,12 +13,12 @@ Security & features
 
 
 Live view - (Weather)[]
-- (Live_view)[https://weather.spass.uk]
-- (Production)[https://weather-front-sand.vercel.app]
+- [Live_view](https://weather.spass.uk)
+- [Production](https://weather-front-sand.vercel.app)
 
 
 May need some tweaking for early preview bare html
-- (Follow on here)[https://github.com/sp4s-s/the-weather-thing]
+- [Follow on here](https://github.com/sp4s-s/the-weather-thing)
 - (Broken)(https://github.com/sp4s-s/pm-weather)
 
 
@@ -39,3 +39,5 @@ change these to point to backend endpoint .
 // const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:3001";
 const API_BASE = "https://wea-2af3.onrender.com";
 ```
+Contact for other info 
+my main [repo](https://github.com/sp4s-s)
