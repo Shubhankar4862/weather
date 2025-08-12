@@ -1,6 +1,17 @@
 Assessment by
 - Shubhankar Mahanta (sp4s-s)
 
+Security & features
+- SSL Certificate Enabled
+- DB Postgress Access with CA certs only
+- Vercel Ready with root level monorepo
+- Full stack with CRUD
+- Currently deployed on separate platforms
+    - Backend (Render.com)
+    - Frontend (Vercel.com)
+    - Deployment Security enabled
+
+
 Live view - (Weather)[]
 - (Live_view)[https://weather.spass.uk]
 - (Production)[https://weather-front-sand.vercel.app]
