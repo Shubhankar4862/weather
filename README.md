@@ -12,7 +12,7 @@ Security & features
     - Deployment Security enabled
 
 
-Live view - (Weather)[]
+Live view - (Weather)[] render may take ~50sec coldstart wait & avoid sending multiple request 
 - [Live_view](https://weather.spass.uk)
 - [Production](https://weather-front-sand.vercel.app)
 
